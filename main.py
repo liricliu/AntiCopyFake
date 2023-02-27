@@ -68,7 +68,8 @@ def plot_features(im,locs,circle=True):
     imshow(im)
     if circle:
         for p in locs:
-            draw_circle(p[:2],p[2]) 
+            if p[2]<=3.5:
+                draw_circle(p[:2],p[2]) 
     else:
         plot(locs[:,0],locs[:,1],'ob')
     axis('off')
@@ -77,7 +78,7 @@ def plot_features(im,locs,circle=True):
 
 if __name__ == '__main__':
 
-    yuzhi=0.1
+    yuzhi=0.13
 
     #imgpre = Image.open("E:\\SIFT-Python-master\\test.jpg").convert("RGB")
     #GaussianBlur(sigma=1).filter(imgpre).save("E:\\SIFT-Python-master\\t2.jpg")
@@ -87,7 +88,7 @@ if __name__ == '__main__':
     process_image(imname,'test.sift')
 
     l1,d1 = read_features_from_file('test.sift')       
-    figure()
+    fig=figure()
     gray()
     
     plot_features(im,l1,circle = True)
@@ -100,6 +101,8 @@ if __name__ == '__main__':
         i_j_d_min1=999999999
         j_i_min=-1
         j_i_min1=-1
+        if l1[i_i,2]>3.5:
+            continue
         for j_i in range(i_i+1,rangex):
             i_j_d=0
             for k in range(0,128):
@@ -126,4 +129,5 @@ if __name__ == '__main__':
     #for i in pipeilist:
     #    plot([l1[i[0],0],l1[i[0],1]],[l1[i[1],0],l1[i[1],1]])
     title('sift-features0.1')
+    fig.savefig('OUT.jpg')
     show()
