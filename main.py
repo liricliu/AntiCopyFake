@@ -82,7 +82,7 @@ if __name__ == '__main__':
     #imgpre = Image.open("E:\\SIFT-Python-master\\test.jpg").convert("RGB")
     #GaussianBlur(sigma=1).filter(imgpre).save("E:\\SIFT-Python-master\\t2.jpg")
     #print("Filtered")
-    imname = ('E:\\SIFT-Python-master\\t5.jpg')          
+    imname = ('E:\\SIFT-Python-master\\test.jpg')          
     im=Image.open(imname)
     process_image(imname,'test.sift')
 
