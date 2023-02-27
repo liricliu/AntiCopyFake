@@ -1,2 +1,4 @@
 MICC-F220/
 PicOutput/
+*.sift
+tmp.pgm

@@ -1,9 +1,8 @@
-import matplotlib.pylab as plt
-import matplotlib.image as mpimg
-import numpy as np
-import scipy as sci
 from PIL import Image
-import copy
+from numpy import *
+from pylab import *
+import scipy as sci
+import os
 class GaussianBlur(object):
     def __init__(self, kernel_size=3, sigma=1):
         self.kernel_size = kernel_size
@@ -31,101 +30,100 @@ class GaussianBlur(object):
             for i in range(c):
                 new_arr[..., i] = sci.signal.convolve2d(img_arr[..., i], self.kernel, mode="same", boundary="symm")
         new_arr = np.array(new_arr, dtype=np.uint8)
-        # return Image.fromarray(new_arr)
-        return new_arr
+        return Image.fromarray(new_arr)
+        # return new_arr
 
-def main():
+def process_image(imagename,resultname,params="--edge-thresh 10 --peak-thresh 5"):
+    """ Process an image and save the results in a file. """
 
-    #读入图片
-    img = Image.open("/home/liricmechan/antifake/test.jpg").convert("RGB")
-    im = np.array(img)
-    width=im.shape[1]
-    height=im.shape[0]
-    channel=im.shape[2]
-    print("读入的图像信息：\n宽",width,"高",height,"色彩通道数",channel)
+    if imagename[-3:] != 'pgm':
+        # create a pgm file
+        im = Image.open(imagename).convert('L') 
+        im.save('tmp.pgm')                      
+        imagename = 'tmp.pgm'
+   
+    cmmd = str("E:\SIFT-Python-master\sift.exe "+imagename+" --output="+resultname+
+                " "+params)
+    os.system(cmmd)                              
+    print ('processed', imagename, 'to', resultname)
 
-    # 生成高斯金字塔
-    GaussianPyra=[]
-    for i in range(0,4):
-        GaussianPyra.append(GaussianBlur(sigma=pow(2,i)).filter(img))
-    # 生成高斯差分金字塔
-    DoGPyra=[]
-    for i in range(0,3):
-        DoGPyra.append(GaussianPyra[i+1]-GaussianPyra[i])
-    # 输出高斯金字塔图像
-    for index,oct in enumerate(GaussianPyra):
-        Image.fromarray(oct).save("PicOutput/testGauss"+str(index)+".jpg");
-    # 输出高斯差分金字塔图像
-    for index,oct in enumerate(DoGPyra):
-        Image.fromarray(oct).save("PicOutput/testDoG"+str(index)+".jpg");
 
-    # 查找极值点
-    PoleSpotR=[]
-    PoleSpotG=[]
-    PoleSpotB=[]
-    is_max_r=True
-    is_min_r=True
-    is_max_g=True
-    is_min_g=True
-    is_max_b=True
-    is_min_b=True
-    im_r=copy.copy(im)
-    im_g=copy.copy(im)
-    im_b=copy.copy(im)
-    for k in range(0,3):
-        for i in range(1,height-1):
-            for j in range(1,width-1):
-                is_max_r=True
-                is_min_r=True
-                is_max_g=True
-                is_min_g=True
-                is_max_b=True
-                is_min_b=True
-                for i_k in range (-1,2):
-                    for j_k in range (-1,2):
-                        for k_k in range(0 if k==0 else -1,1 if k==2 else 2):
-                            if(not (i_k==0 and j_k==0 and k_k==0)):
-                                if (DoGPyra[k])[i,j,0]>=(DoGPyra[k+k_k])[i+i_k,j+j_k,0]:
-                                    is_min_r=False
-                                if (DoGPyra[k])[i,j,0]<=(DoGPyra[k+k_k])[i+i_k,j+j_k,0]:
-                                    is_max_r=False
-                                if (DoGPyra[k])[i,j,0]>=(DoGPyra[k+k_k])[i+i_k,j+j_k,1]:
-                                    is_min_g=False
-                                if (DoGPyra[k])[i,j,0]<=(DoGPyra[k+k_k])[i+i_k,j+j_k,1]:
-                                    is_max_g=False
-                                if (DoGPyra[k])[i,j,0]>=(DoGPyra[k+k_k])[i+i_k,j+j_k,2]:
-                                    is_min_b=False
-                                if (DoGPyra[k])[i,j,0]<=(DoGPyra[k+k_k])[i+i_k,j+j_k,2]:
-                                    is_max_b=False
-                if(is_max_r==True or is_min_r==True):
-                    PoleSpotR.append([i,j,k])
-                    im_r[i,j,0]=255
-                    im_r[i,j,1]=0
-                    im_r[i,j,2]=0
-                if(is_max_g==True or is_min_g==True):
-                    PoleSpotG.append([i,j,k])
-                    im_g[i,j,0]=0
-                    im_g[i,j,1]=255
-                    im_g[i,j,2]=0
-                if(is_max_b==True or is_min_b==True):
-                    PoleSpotB.append([i,j,k])
-                    im_b[i,j,0]=0
-                    im_b[i,j,1]=0
-                    im_b[i,j,2]=255
-    # 输出R分量极值点图
-    Image.fromarray(im_r).save("PicOutput/RChannel"+".jpg");
-    # 输出G分量极值点图
-    Image.fromarray(im_g).save("PicOutput/GChannel"+".jpg");
-    # 输出B分量极值点图
-    Image.fromarray(im_b).save("PicOutput/BChannel"+".jpg");
+def read_features_from_file(filename):
+    """ Read feature properties and return in matrix form. """
+    
+    f = loadtxt(filename)
+    return f[:,:4],f[:,4:] # feature locations, descriptors
 
-    print(PoleSpotR)
-    print(PoleSpotG)
-    print(PoleSpotB)
-    #print(DoGPyra)
 
-    #plt.imshow(Image.fromarray(img))
-    #plt.axis('off')
-    #plt.show()
+def plot_features(im,locs,circle=True):
+    """ Show image with features. input: im (image as array), 
+        locs (row, col, scale, orientation of each feature). """
 
-main()
+    def draw_circle(c,r):
+        t = arange(0,1.01,.01)*2*pi
+        x = r*cos(t) + c[0]
+        y = r*sin(t) + c[1]
+        plot(x,y,'b',linewidth=2)
+
+    imshow(im)
+    if circle:
+        for p in locs:
+            draw_circle(p[:2],p[2]) 
+    else:
+        plot(locs[:,0],locs[:,1],'ob')
+    axis('off')
+
+ 
+
+if __name__ == '__main__':
+
+    yuzhi=0.1
+
+    #imgpre = Image.open("E:\\SIFT-Python-master\\test.jpg").convert("RGB")
+    #GaussianBlur(sigma=1).filter(imgpre).save("E:\\SIFT-Python-master\\t2.jpg")
+    #print("Filtered")
+    imname = ('E:\\SIFT-Python-master\\t5.jpg')          
+    im=Image.open(imname)
+    process_image(imname,'test.sift')
+
+    l1,d1 = read_features_from_file('test.sift')       
+    figure()
+    gray()
+    
+    plot_features(im,l1,circle = True)
+    xxxxxxx=[-1,-1]
+    pipeilist=[xxxxxxx]
+    rangex=d1.shape[0]
+
+    for i_i in range(0,rangex):
+        i_j_d_min=999999999
+        i_j_d_min1=999999999
+        j_i_min=-1
+        j_i_min1=-1
+        for j_i in range(i_i+1,rangex):
+            i_j_d=0
+            for k in range(0,128):
+                i_j_d=i_j_d+(d1[i_i,k]-d1[j_i,k])*(d1[i_i,k]-d1[j_i,k])
+            if i_j_d<i_j_d_min:
+                i_j_d_min=i_j_d
+                j_i_min=j_i
+            else:
+                if i_j_d<i_j_d_min1:
+                    i_j_d_min1=i_j_d
+                    j_i_min1=j_i
+        if i_j_d_min/i_j_d_min1<yuzhi:
+            print(i_j_d_min/i_j_d_min1,i_j_d_min,i_j_d_min1)
+            pipeilist.append([i_i,j_i_min])
+            print("pipeichenggong:"+str(i_i)+","+str(j_i_min))
+            print(l1[i_i,0],l1[i_i,1],l1[j_i_min,0],l1[j_i_min,1],l1[j_i_min1,0],l1[j_i_min1,1])
+            plot([l1[i_i,0],l1[j_i_min,0]],[l1[i_i,1],l1[j_i_min,1]])
+    #plot([100,150],[500,200])
+    #print(pipeilist)
+    #plot(locs[:,0],locs[:,1],'ob')
+
+
+            
+    #for i in pipeilist:
+    #    plot([l1[i[0],0],l1[i[0],1]],[l1[i[1],0],l1[i[1],1]])
+    title('sift-features0.1')
+    show()
