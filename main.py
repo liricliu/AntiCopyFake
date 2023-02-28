@@ -46,6 +46,7 @@ if __name__ == '__main__':
             d1.append(des[selected_keypoint_counter])
             selected_keypoint_counter+=1
     l1=np.array(l1)
+    d1=np.array(d1)
     print(str(keypoint_counter)+' feature points detected.')
     print(str(selected_keypoint_counter)+' feature points selected.')
     print(l1.shape)
