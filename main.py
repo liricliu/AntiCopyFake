@@ -5,10 +5,11 @@ import scipy as sci
 import os
 import pysift
 import cv2
+from sklearn.decomposition import PCA
 
-
-yuzhi=0.13
-size_shangxian=3.5
+yuzhi=0.13 #匹配特征值用的阈值
+size_shangxian=3.5 #筛除size大于上限的特征点
+wupipei_canshu=100 #降低误匹配率用的
 
 def plot_features(im,locs,circle=True):
     """ Show image with features. input: im (image as array), 
@@ -31,7 +32,7 @@ def plot_features(im,locs,circle=True):
 
 if __name__ == '__main__':
 
-    imname = ('测试结果/t1.jpg')          
+    imname = ('测试结果/t4.jpg')          
     im=Image.open(imname)
     image = cv2.imread(imname, 0)
     print("Scanning for feature points")
@@ -49,6 +50,9 @@ if __name__ == '__main__':
             selected_keypoint_counter+=1
     l1=np.array(l1)
     d1=np.array(d1)
+    pca = PCA(n_components=20)
+    pca.fit(d1)
+    d1=pca.fit_transform(d1)
     print(str(keypoint_counter)+' feature points detected.')
     print(str(selected_keypoint_counter)+' feature points selected.')
 
@@ -68,7 +72,7 @@ if __name__ == '__main__':
             continue
         for j_i in range(i_i+1,rangex):
             i_j_d=0
-            for k in range(0,128):
+            for k in range(0,20):
                 i_j_d=i_j_d+(d1[i_i,k]-d1[j_i,k])*(d1[i_i,k]-d1[j_i,k])
             if i_j_d<i_j_d_min:
                 i_j_d_min=i_j_d
@@ -77,7 +81,7 @@ if __name__ == '__main__':
                 if i_j_d<i_j_d_min1:
                     i_j_d_min1=i_j_d
                     j_i_min1=j_i
-        if i_j_d_min/i_j_d_min1<yuzhi:
+        if i_j_d_min/i_j_d_min1<yuzhi and abs(i_i-j_i_min)>keypoint_counter/wupipei_canshu:
             print("Matched Index:("+str(i_i)+","+str(j_i_min)+"),min/min1="+str(i_j_d_min/i_j_d_min1))
             plot([l1[i_i,0],l1[j_i_min,0]],[l1[i_i,1],l1[j_i_min,1]])
             counter+=1
