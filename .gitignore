@@ -1,4 +1,3 @@
 MICC-F220/
-PicOutput/
-__pycache__
-*.jpg
+Output.jpg
+__pycache__/

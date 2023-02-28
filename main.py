@@ -6,6 +6,10 @@ import os
 import pysift
 import cv2
 
+
+yuzhi=0.13
+size_shangxian=3.5
+
 def plot_features(im,locs,circle=True):
     """ Show image with features. input: im (image as array), 
         locs (row, col, scale, orientation of each feature). """
@@ -19,17 +23,15 @@ def plot_features(im,locs,circle=True):
     imshow(im)
     if circle:
         for p in locs:
-            draw_circle(p[:2],p[2]) 
+            if p[2]<=size_shangxian:
+                draw_circle(p[:2],p[2]) 
     else:
         plot(locs[:,0],locs[:,1],'ob')
     axis('off')
 
 if __name__ == '__main__':
 
-    yuzhi=0.13
-    size_shangxian=3.5
-
-    imname = ('t1.jpg')          
+    imname = ('测试结果/t1.jpg')          
     im=Image.open(imname)
     image = cv2.imread(imname, 0)
     print("Scanning for feature points")
@@ -39,18 +41,16 @@ if __name__ == '__main__':
     keypoint_counter=0
     selected_keypoint_counter=0
     for k in keypoints:
+        l1.append([k.pt[0],k.pt[1],k.size])
+        d1.append(des[keypoint_counter])
         keypoint_counter+=1
         # Filter the large points
         if k.size<size_shangxian:
-            l1.append([k.pt[0],k.pt[1],k.size,k.size])
-            d1.append(des[selected_keypoint_counter])
             selected_keypoint_counter+=1
     l1=np.array(l1)
     d1=np.array(d1)
     print(str(keypoint_counter)+' feature points detected.')
     print(str(selected_keypoint_counter)+' feature points selected.')
-    print(l1.shape)
-    print(d1.shape)
 
     fig=figure()
     gray()
@@ -79,7 +79,6 @@ if __name__ == '__main__':
                     j_i_min1=j_i
         if i_j_d_min/i_j_d_min1<yuzhi:
             print("Matched Index:("+str(i_i)+","+str(j_i_min)+"),min/min1="+str(i_j_d_min/i_j_d_min1))
-            #print(l1[i_i,0],l1[i_i,1],l1[j_i_min,0],l1[j_i_min,1],l1[j_i_min1,0],l1[j_i_min1,1])
             plot([l1[i_i,0],l1[j_i_min,0]],[l1[i_i,1],l1[j_i_min,1]])
             counter+=1
     print(str(counter)+" points matched in total.")
